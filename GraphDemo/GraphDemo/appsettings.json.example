@@ -1,0 +1,7 @@
+{
+  "applicationId": "451912ea-1728-4fc5-b27d-453821c62aa6",
+  "applicationSecret": "u(6OCN;krp_8)+ZVs2QqOsp=qtclv-Txd10vl[;",
+  "tenantId": "c10ade6e-bb7a-4ff1-bad2-b86a07108640",
+  "redirectUri": "https://localhost:8080",
+  "domain": "yourdomain.onmicrosoft.com"
+}
