@@ -1,12 +1,9 @@
-﻿using System;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Graph;
+using Microsoft.Identity.Client;
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Threading.Tasks;
-using Microsoft.Identity.Client;
-using Microsoft.Graph;
-using Microsoft.Extensions.Configuration;
-using ConsoleGraphTest;
 
 namespace GraphDemo
 {
@@ -36,6 +33,10 @@ namespace GraphDemo
 
             //Query using Graph SDK (preferred when possible)
             GraphServiceClient graphClient = GetAuthenticatedGraphClient(config);
+
+            //为用户分配license
+            AddLicenseToUser(config);
+
             //在Azure AD中创建用户
             CreateAndFindNewUser(config);
 
@@ -62,6 +63,21 @@ namespace GraphDemo
             Console.WriteLine(httpResult);
 
             Console.ReadKey();
+        }
+
+        private static void AddLicenseToUser(IConfigurationRoot config)
+        {
+            string alias = "foxdave";
+            string domain = config["domain"];
+            string upn = $"{alias}@{domain}";
+
+            var userHelper = new UserHelper(_graphServiceClient);
+            var user = userHelper.GetUser(upn).Result;
+
+            var licenseHelper = new LicenseHelper(_graphServiceClient);
+            var sku = licenseHelper.GetLicense().Result;
+            licenseHelper.AddLicense(user.Id, sku.SkuId).GetAwaiter().GetResult();
+            Console.WriteLine("License assigned.");
         }
 
         private static IConfigurationRoot LoadAppSettings()

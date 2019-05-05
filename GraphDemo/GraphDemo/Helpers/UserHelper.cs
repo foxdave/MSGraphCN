@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Graph;
 
-namespace ConsoleGraphTest
+namespace GraphDemo
 {
     public class UserHelper
     {
@@ -18,6 +18,12 @@ namespace ConsoleGraphTest
         {
             var userToAdd = BuildUserToAdd(displayName, alias, domain, password);
             await _graphClient.Users.Request().AddAsync(userToAdd);
+        }
+
+        public async Task<User> GetUser(string UPN)
+        {
+            var user = await _graphClient.Users[UPN].Request().GetAsync();
+            return user;
         }
 
         public async Task<User> FindByAlias(string alias)
