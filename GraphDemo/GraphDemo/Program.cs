@@ -21,6 +21,8 @@ namespace GraphDemo
         private static GraphServiceClient _graphServiceClient;
         private static HttpClient _httpClient;
 
+        private const string alias = "foxdave";
+
         static void Main(string[] args)
         {
             //Console.WriteLine("Hello World!");
@@ -33,6 +35,31 @@ namespace GraphDemo
 
             //Query using Graph SDK (preferred when possible)
             GraphServiceClient graphClient = GetAuthenticatedGraphClient(config);
+
+            //Direct query using HTTPClient (for beta endpoint calls or not available in Graph SDK)
+            HttpClient httpClient = GetAuthenticatedHTTPClient(config);
+
+            #region Day 18
+            //获取当前时区设置
+            GetUserMailboxDefaultTimeZone();
+
+            //更新当前用户邮箱的时区设置
+            SetUserMailboxDefaultTimeZone();
+
+            //再次获取时区设置验证更新是否成功
+            GetUserMailboxDefaultTimeZone();
+
+            //通过MS Graph SDK获取邮件消息
+            ListUserMailInboxMessages();
+
+            //创建一个新的消息规则
+            CreateUserMailBoxRule();
+
+            //获取消息规则以验证创建是否成功
+            ListUserMailBoxRules();
+
+            Console.ReadKey();
+            #endregion
 
             //为用户分配license
             AddLicenseToUser(config);
@@ -54,8 +81,6 @@ namespace GraphDemo
             Console.WriteLine("Graph SDK Result");
             Console.WriteLine(graphResult[0].DisplayName);
 
-            //Direct query using HTTPClient (for beta endpoint calls or not available in Graph SDK)
-            HttpClient httpClient = GetAuthenticatedHTTPClient(config);
             Uri Uri = new Uri("https://graph.microsoft.com/v1.0/users?$top=1");
             var httpResult = httpClient.GetStringAsync(Uri).Result;
 
@@ -65,9 +90,47 @@ namespace GraphDemo
             Console.ReadKey();
         }
 
+        private static void ListUserMailBoxRules()
+        {
+            var mailboxHelper = new MailboxHelper(_graphServiceClient);
+            List<ResultsItem> rules = mailboxHelper.GetUserMailboxRules(alias).Result;
+            Console.WriteLine("Rules count: " + rules.Count);
+            foreach (ResultsItem rule in rules)
+            {
+                Console.WriteLine("Rule Name: " + rule.Display);
+            }
+        }
+
+        private static void CreateUserMailBoxRule()
+        {
+            var mailboxHelper = new MailboxHelper(_graphServiceClient);
+            mailboxHelper.CreateRule(alias, "ForwardBasedonSender", 2, true, "svarukal", "adelev@M365x995052.onmicrosoft.com").GetAwaiter().GetResult();
+        }
+
+        private static void GetUserMailboxDefaultTimeZone()
+        {
+            var mailboxHelper = new MailboxHelper(_graphServiceClient);
+            var defaultTimeZone = mailboxHelper.GetUserMailboxDefaultTimeZone(alias).Result;
+            Console.WriteLine("Default timezone: " + defaultTimeZone);
+        }
+        private static void SetUserMailboxDefaultTimeZone()
+        {
+            var mailboxHelper = new MailboxHelper(_graphServiceClient, _httpClient);
+            mailboxHelper.SetUserMailboxDefaultTimeZone(alias, "China Standard Time");
+        }
+        private static void ListUserMailInboxMessages()
+        {
+            var mailboxHelper = new MailboxHelper(_graphServiceClient);
+            List<ResultsItem> items = mailboxHelper.ListInboxMessages(alias).Result;
+            Console.WriteLine("Message count: " + items.Count);
+            foreach (ResultsItem item in items)
+            {
+                Console.WriteLine(item.Display);
+            }
+        }
+
         private static void AddLicenseToUser(IConfigurationRoot config)
         {
-            string alias = "foxdave";
             string domain = config["domain"];
             string upn = $"{alias}@{domain}";
 
