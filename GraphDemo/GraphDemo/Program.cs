@@ -39,6 +39,10 @@ namespace GraphDemo
             //Direct query using HTTPClient (for beta endpoint calls or not available in Graph SDK)
             HttpClient httpClient = GetAuthenticatedHTTPClient(config);
 
+            #region Day 19
+            PermissionHelperExampleScenario();
+            #endregion
+
             #region Day 18
             //获取当前时区设置
             GetUserMailboxDefaultTimeZone();
@@ -61,17 +65,23 @@ namespace GraphDemo
             Console.ReadKey();
             #endregion
 
+            #region Day 17
             //为用户分配license
             AddLicenseToUser(config);
 
+            Console.WriteLine("License assigned.");
+            Console.ReadKey();
+            #endregion
+
+            #region Day 16
             //在Azure AD中创建用户
             CreateAndFindNewUser(config);
 
             Console.WriteLine("User Created.");
             Console.ReadKey();
+            #endregion
 
-
-            //在.NET Core应用程序中调用Microsoft Graph获取Office 365用户信息
+            //Day 15 - 在.NET Core应用程序中调用Microsoft Graph获取Office 365用户信息
             List<QueryOption> options = new List<QueryOption>
             {
                 new QueryOption("$top", "1")
@@ -88,6 +98,39 @@ namespace GraphDemo
             Console.WriteLine(httpResult);
 
             Console.ReadKey();
+        }
+
+        private static void PermissionHelperExampleScenario()
+        {
+            const string alias = "foxdave";
+            ListUnifiedGroupsForUser(alias);
+            string groupId = GetUnifiedGroupStartswith("bra");
+            AddUserToUnifiedGroup(alias, groupId);
+            ListUnifiedGroupsForUser(alias);
+        }
+
+        private static void ListUnifiedGroupsForUser(string alias)
+        {
+            var permissionHelper = new PermissionHelper(_graphServiceClient);
+            List<ResultsItem> items = permissionHelper.UserMemberOf(alias).Result;
+            Console.WriteLine("User is member of " + items.Count + " group(s).");
+            foreach (ResultsItem item in items)
+            {
+                Console.WriteLine("  Group Name: " + item.Display);
+            }
+        }
+
+        private static string GetUnifiedGroupStartswith(string groupPrefix)
+        {
+            var permissionHelper = new PermissionHelper(_graphServiceClient);
+            var groupId = permissionHelper.GetGroupByName(groupPrefix).Result;
+            return groupId;
+        }
+
+        private static void AddUserToUnifiedGroup(string alias, string groupId)
+        {
+            var permissionHelper = new PermissionHelper(_graphServiceClient);
+            permissionHelper.AddUserToGroup(alias, groupId).GetAwaiter().GetResult();
         }
 
         private static void ListUserMailBoxRules()
