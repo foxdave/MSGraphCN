@@ -225,6 +225,10 @@ namespace GraphDemo
 
             var cca = new ConfidentialClientApplication(clientId, authority, redirectUri, new ClientCredential(clientSecret), null, null);
             return new MsalAuthenticationProvider(cca, scopes.ToArray());
+
+            //Day 20 Device code authentication
+            //var cca = new PublicClientApplication(clientId, authority);
+            //return new DeviceCodeFlowAuthorizationProvider(cca, scopes);
         }
 
         private static GraphServiceClient GetAuthenticatedGraphClient(IConfigurationRoot config)
