@@ -39,6 +39,11 @@ namespace GraphDemo
             //Direct query using HTTPClient (for beta endpoint calls or not available in Graph SDK)
             HttpClient httpClient = GetAuthenticatedHTTPClient(config);
 
+            #region Day 21 need device code flow
+            var plannerHelper = new PlannerHelper(graphClient);
+            plannerHelper.PlannerHelperCall().GetAwaiter().GetResult();
+            #endregion
+
             #region Day 19
             PermissionHelperExampleScenario();
             #endregion
@@ -223,12 +228,12 @@ namespace GraphDemo
             List<string> scopes = new List<string>();
             scopes.Add("https://graph.microsoft.com/.default");
 
-            var cca = new ConfidentialClientApplication(clientId, authority, redirectUri, new ClientCredential(clientSecret), null, null);
-            return new MsalAuthenticationProvider(cca, scopes.ToArray());
+            //var cca = new ConfidentialClientApplication(clientId, authority, redirectUri, new ClientCredential(clientSecret), null, null);
+            //return new MsalAuthenticationProvider(cca, scopes.ToArray());
 
             //Day 20 Device code authentication
-            //var cca = new PublicClientApplication(clientId, authority);
-            //return new DeviceCodeFlowAuthorizationProvider(cca, scopes);
+            var cca = new PublicClientApplication(clientId, authority);
+            return new DeviceCodeFlowAuthorizationProvider(cca, scopes);
         }
 
         private static GraphServiceClient GetAuthenticatedGraphClient(IConfigurationRoot config)
