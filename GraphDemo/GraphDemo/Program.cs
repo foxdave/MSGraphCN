@@ -3,7 +3,9 @@ using Microsoft.Graph;
 using Microsoft.Identity.Client;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace GraphDemo
 {
@@ -22,6 +24,7 @@ namespace GraphDemo
         private static HttpClient _httpClient;
 
         private const string alias = "foxdave";
+        private const string principalName = "foxdave@jfoxdave.onmicrosoft.com";
 
         static void Main(string[] args)
         {
@@ -38,6 +41,10 @@ namespace GraphDemo
 
             //Direct query using HTTPClient (for beta endpoint calls or not available in Graph SDK)
             HttpClient httpClient = GetAuthenticatedHTTPClient(config);
+
+            #region Day 22 Intune
+            IntuneHelperCall(config).GetAwaiter().GetResult();
+            #endregion
 
             #region Day 21 need device code flow
             var plannerHelper = new PlannerHelper(graphClient);
@@ -103,6 +110,65 @@ namespace GraphDemo
             Console.WriteLine(httpResult);
 
             Console.ReadKey();
+        }
+
+        private static async Task ListManagedDevices(IntuneHelper intuneHelper, string userPrincipalName)
+        {
+            var managedDevices = await intuneHelper.ListManagedDevicesForUser(userPrincipalName);
+
+            Console.WriteLine($"Number of Intune managed devices for user {userPrincipalName}: {managedDevices.Count()}");
+            Console.WriteLine(managedDevices.Select(x => $"-- {x.DeviceName} : {x.Manufacturer} {x.Model}").Aggregate((x, y) => $"{x}\n{y}"));
+        }
+
+        private static async Task IntuneHelperCall(IConfigurationRoot config)
+        {
+            var graphClient = GetAuthenticatedGraphClient(config);
+            var intuneHelper = new IntuneHelper(graphClient);
+            //获取设备列表
+            await ListManagedDevices(intuneHelper, principalName);
+            //发布一个Web应用程序
+            WebApp app = await PublishWebApp(intuneHelper,
+                "http://aka.ms/30DaysMsGraph", "30 Days of MS Graph", "Microsoft Corporation");
+            //指派应用程序到用户
+            await AssignAppToAllUsers(intuneHelper, app);
+            //创建设备配置
+            DeviceConfiguration deviceConfiguration = await CreateWindowsDeviceConfiguration(intuneHelper,
+                "Windows 10 Developer Configuration", "http://aka.ms/30DaysMsGraph", true);
+            //指派设备配置
+            await AssignDeviceConfigurationToAllDevices(intuneHelper, deviceConfiguration);
+        }
+
+        private static async Task<WebApp> PublishWebApp(IntuneHelper intuneHelper, string url, string name, string publisher)
+        {
+            var webApp = await intuneHelper.PublishWebApp(url, name, publisher);
+
+            Console.WriteLine($"Published web app: {webApp.Id}: {webApp.DisplayName} - {webApp.AppUrl}");
+
+            return webApp;
+        }
+
+        private static async Task AssignAppToAllUsers(IntuneHelper intuneHelper, MobileApp app)
+        {
+            var assignments = await intuneHelper.AssignAppToAllUsers(app);
+            Console.WriteLine($"App {app.DisplayName} has {assignments.Count()} assignments");
+        }
+
+        private static async Task<DeviceConfiguration> CreateWindowsDeviceConfiguration(IntuneHelper intuneHelper, string displayName, string edgeHomePage, bool enableDeveloperMode)
+        {
+            var deviceConfiguration = await intuneHelper.CreateWindowsDeviceConfiguration(
+                displayName,
+                edgeHomePage,
+                enableDeveloperMode);
+
+            Console.WriteLine($"Created Device Configuration: {deviceConfiguration.Id}: {deviceConfiguration.DisplayName}");
+
+            return deviceConfiguration;
+        }
+
+        private static async Task AssignDeviceConfigurationToAllDevices(IntuneHelper intuneHelper, DeviceConfiguration deviceConfiguration)
+        {
+            var assignments = await intuneHelper.AssignDeviceConfigurationToAllDevices(deviceConfiguration);
+            Console.WriteLine($"Device Configuration {deviceConfiguration.DisplayName} has {assignments.Count()} assignments");
         }
 
         private static void PermissionHelperExampleScenario()
