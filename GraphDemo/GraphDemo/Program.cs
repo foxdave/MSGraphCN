@@ -42,6 +42,10 @@ namespace GraphDemo
             //Direct query using HTTPClient (for beta endpoint calls or not available in Graph SDK)
             HttpClient httpClient = GetAuthenticatedHTTPClient(config);
 
+            #region Day 25 OneNote
+            OneNoteHelperCall();
+            #endregion
+
             #region Day 22 Intune
             IntuneHelperCall(config).GetAwaiter().GetResult();
             #endregion
@@ -110,6 +114,28 @@ namespace GraphDemo
             Console.WriteLine(httpResult);
 
             Console.ReadKey();
+        }
+
+        private static void OneNoteHelperCall()
+        {
+            const string userPrincipalName = principalName;
+            const string notebookName = "Microsoft Graph notes";
+            const string sectionName = "Required Reading";
+            const string pageName = "30DaysMSGraph";
+
+            var onenoteHelper = new OneNoteHelper(_graphServiceClient);
+            var onenoteHelperHttp = new OneNoteHelper(_httpClient);
+
+            var notebookResult = onenoteHelper.GetNotebook(userPrincipalName, notebookName) ?? onenoteHelper.CreateNoteBook(userPrincipalName, notebookName).GetAwaiter().GetResult();
+            Console.WriteLine("Found / created notebook: " + notebookResult.DisplayName);
+
+            var sectionResult = onenoteHelper.GetSection(userPrincipalName, notebookResult, sectionName) ?? onenoteHelper.CreateSection(userPrincipalName, notebookResult, sectionName).GetAwaiter().GetResult();
+            Console.WriteLine("Found / created section: " + sectionResult.DisplayName);
+
+            var pageCreateResult = onenoteHelperHttp.CreatePage(userPrincipalName, sectionResult, pageName).GetAwaiter().GetResult();
+
+            var pageGetResult = onenoteHelper.GetPage(userPrincipalName, sectionResult, pageName);
+            Console.WriteLine("Found / created page: " + pageGetResult.Title);
         }
 
         private static async Task ListManagedDevices(IntuneHelper intuneHelper, string userPrincipalName)
@@ -294,12 +320,12 @@ namespace GraphDemo
             List<string> scopes = new List<string>();
             scopes.Add("https://graph.microsoft.com/.default");
 
-            //var cca = new ConfidentialClientApplication(clientId, authority, redirectUri, new ClientCredential(clientSecret), null, null);
-            //return new MsalAuthenticationProvider(cca, scopes.ToArray());
+            var cca = new ConfidentialClientApplication(clientId, authority, redirectUri, new ClientCredential(clientSecret), null, null);
+            return new MsalAuthenticationProvider(cca, scopes.ToArray());
 
             //Day 20 Device code authentication
-            var cca = new PublicClientApplication(clientId, authority);
-            return new DeviceCodeFlowAuthorizationProvider(cca, scopes);
+            //var cca = new PublicClientApplication(clientId, authority);
+            //return new DeviceCodeFlowAuthorizationProvider(cca, scopes);
         }
 
         private static GraphServiceClient GetAuthenticatedGraphClient(IConfigurationRoot config)
