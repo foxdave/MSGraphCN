@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Microsoft.Graph;
+using Microsoft.Identity.Client;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
-using Microsoft.Identity.Client;
-using Microsoft.Graph;
-using Microsoft.Extensions.Configuration;
-using System.Linq;
 
 namespace GraphDemo
 {
@@ -16,10 +12,10 @@ namespace GraphDemo
     // the GraphSDK team.  It will supports all the types of Client Application as defined by MSAL.
     public class MsalAuthenticationProvider : IAuthenticationProvider
     {
-        private ConfidentialClientApplication _clientApplication;
+        private IConfidentialClientApplication _clientApplication;
         private string[] _scopes;
 
-        public MsalAuthenticationProvider(ConfidentialClientApplication clientApplication, string[] scopes)
+        public MsalAuthenticationProvider(IConfidentialClientApplication clientApplication, string[] scopes)
         {
             _clientApplication = clientApplication;
             _scopes = scopes;
@@ -40,7 +36,7 @@ namespace GraphDemo
         public async Task<string> GetTokenAsync()
         {
             AuthenticationResult authResult = null;
-            authResult = await _clientApplication.AcquireTokenForClientAsync(_scopes);
+            authResult = await _clientApplication.AcquireTokenForClient(_scopes).ExecuteAsync();
             return authResult.AccessToken;
         }
     }

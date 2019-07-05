@@ -320,12 +320,21 @@ namespace GraphDemo
             List<string> scopes = new List<string>();
             scopes.Add("https://graph.microsoft.com/.default");
 
-            var cca = new ConfidentialClientApplication(clientId, authority, redirectUri, new ClientCredential(clientSecret), null, null);
+            //var cca = new ConfidentialClientApplication(clientId, authority, redirectUri, new ClientCredential(clientSecret), null, null);
+            var cca = ConfidentialClientApplicationBuilder.Create(clientId)
+                .WithAuthority(authority)
+                .WithRedirectUri(redirectUri)
+                .WithClientSecret(clientSecret)
+                .Build();
             return new MsalAuthenticationProvider(cca, scopes.ToArray());
 
             //Day 20 Device code authentication
-            //var cca = new PublicClientApplication(clientId, authority);
-            //return new DeviceCodeFlowAuthorizationProvider(cca, scopes);
+            //var pca = PublicClientApplicationBuilder.Create(clientId)
+            //    .WithAuthority(authority)
+            //    .WithRedirectUri(redirectUri)
+            //    .Build();
+            ////var cca = new PublicClientApplication(clientId, authority);
+            //return new DeviceCodeFlowAuthorizationProvider(pca, scopes);
         }
 
         private static GraphServiceClient GetAuthenticatedGraphClient(IConfigurationRoot config)
